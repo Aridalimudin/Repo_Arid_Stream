@@ -38,7 +38,7 @@ jobs:
           cd main
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson
+          ./gradlew makePluginsJson --info --stacktrace
           find . -name "*.cs3" -exec cp {} ../builds/ \; 2>/dev/null || true
           cp build/plugins.json ../builds/ 2>/dev/null || true
 
