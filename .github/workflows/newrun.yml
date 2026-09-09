@@ -1,77 +1,49 @@
 name: Build
 
-concurrency:
-  group: "build"
-  cancel-in-progress: true
-
 on:
   push:
     branches:
-      - master
       - main
-    paths-ignore:
-      - '*.md'
-
-permissions:
-  contents: write
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          path: "src"
+          repository: ${{ github.repository }}
+          ref: main
+          path: main
 
-      - name: Checkout builds
+      - name: Checkout builds branch
         uses: actions/checkout@v4
         with:
-          ref: "builds"
-          path: "builds"
+          repository: ${{ github.repository }}
+          ref: builds
+          path: main/builds
 
-      - name: Clean old builds
-        run: |
-          rm $GITHUB_WORKSPACE/builds/*.cs3 || true
-          rm $GITHUB_WORKSPACE/builds/*.jar || true
-
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: 'zulu'
+          java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: false
-
-      - name: Create local.properties
-        run: |
-          cd $GITHUB_WORKSPACE/src
-          touch local.properties
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Build Plugins
         run: |
-          cd $GITHUB_WORKSPACE/src
+          cd main
           chmod +x gradlew
-          ./gradlew makePluginsJson
-          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds || true
-          cp **/build/*.jar $GITHUB_WORKSPACE/builds || true
-          cp build/plugins.json $GITHUB_WORKSPACE/builds
+          ./gradlew make --no-daemon
 
-      - name: Push builds
+      - name: Push to builds branch
         run: |
-          cd $GITHUB_WORKSPACE/builds
-
-          # Safety check repo.json
-          if [ ! -f "repo.json" ]; then
-            echo "BAHAYA: repo.json hilang! Membatalkan proses."
-            exit 1
-          fi
-
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
+          cd main/builds
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git add .
-          git commit --amend -m "Build $GITHUB_SHA" || exit 0
-          git push --force
+          git commit -m "Updated extensions" || exit 0
+          git push
