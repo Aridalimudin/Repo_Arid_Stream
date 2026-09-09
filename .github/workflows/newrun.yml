@@ -65,14 +65,14 @@ for root, dirs, files in os.walk('.'):
                 with open(path, 'r', encoding='utf-8') as fp:
                     data = json.load(fp)
                     entries.append(data)
-                    print(f'Added plugin entry: {data.get(\"name\")}')
+                    print('Added plugin entry: ' + str(data.get('name')))
             except Exception as e:
-                print(f'Error reading {path}: {e}')
+                print('Error reading ' + path + ': ' + str(e))
 
 out_path = os.path.join(os.environ.get('GITHUB_WORKSPACE', ''), 'builds', 'plugins.json')
 with open(out_path, 'w', encoding='utf-8') as fp:
     json.dump(entries, fp, indent=2)
-print(f'Generated plugins.json with {len(entries)} plugins at {out_path}')
+print('Generated plugins.json with ' + str(len(entries)) + ' plugins at ' + out_path)
 "
           fi
 
