@@ -85,24 +85,24 @@ subprojects {
         val cloudstream by configurations
         cloudstream("com.lagradost:cloudstream3:pre-release")
 
-        // Fix for Kotlin 2.4.0 strict type annotation checking
+        // Fix for Kotlin strict type annotation checking
         implementation("org.jspecify:jspecify:1.0.0")
 
         // Other dependencies
         implementation(kotlin("stdlib"))
-        implementation("com.github.Blatzar:NiceHttp:0.4.18")
-        implementation("org.jsoup:jsoup:1.22.2")
-        implementation("androidx.annotation:annotation:1.10.0")
+        implementation("com.github.Blatzar:NiceHttp:0.4.11")
+        implementation("org.jsoup:jsoup:1.18.3")
+        implementation("androidx.annotation:annotation:1.9.1")
         // Do not bump above 2.13.1
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
         implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
         // Do not bump above 1.8.1
         implementation("org.mozilla:rhino:1.8.1")
         implementation("me.xdrop:fuzzywuzzy:1.4.0")
-        implementation("com.google.code.gson:gson:2.14.0")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-        implementation("org.bouncycastle:bcpkix-jdk18on:1.84")
+        implementation("com.google.code.gson:gson:2.11.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+        implementation("org.bouncycastle:bcpkix-jdk18on:1.79")
     }
 }
 
