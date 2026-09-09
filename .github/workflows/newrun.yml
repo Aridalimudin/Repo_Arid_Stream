@@ -41,7 +41,7 @@ jobs:
           cd main
           touch local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson
+          ./gradlew makePluginsJson --info --continue 2>&1 | tail -200
           find . -name "*.cs3" | xargs -I{} cp {} builds/ 2>/dev/null || true
           cp build/plugins.json builds/ 2>/dev/null || true
 

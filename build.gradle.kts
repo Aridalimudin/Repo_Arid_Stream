@@ -51,7 +51,7 @@ subprojects {
     }
 
     android {
-        namespace = "com.aridalimudin"
+        namespace = "com.lagradost"
         compileSdk = 36
 
         defaultConfig {
