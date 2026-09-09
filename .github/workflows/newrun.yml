@@ -38,22 +38,19 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson --continue || true
-          echo "=== Cari plugins.json ==="
-          find . -name "plugins.json" 2>/dev/null
-          echo "=== Cari cs3 ==="
-          find . -name "*.cs3" 2>/dev/null
-          echo "=== Copy files ==="
-          cp build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || echo "plugins.json not found in build/"
-          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds/ 2>/dev/null || echo "no cs3 files"
-          find . -name "*.cs3" -exec cp {} $GITHUB_WORKSPACE/builds/ \; 2>/dev/null || true
+          ./gradlew make makePluginsJson
+          echo "=== Artifacts generated ==="
+          find . -name "*.cs3" -o -name "plugins.json"
+          cp -f build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || true
+          find . -name "*.cs3" -exec cp -f {} $GITHUB_WORKSPACE/builds/ \; 2>/dev/null || true
+          find . -name "plugins.json" -exec cp -f {} $GITHUB_WORKSPACE/builds/ \; 2>/dev/null || true
 
       - name: Push to builds branch
         working-directory: builds
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add -f .
+          git add -A
           git status
           git commit -m "Build ${{ github.sha }}" || echo "Nothing to commit"
-          git push
+          git push origin builds
