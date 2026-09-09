@@ -39,10 +39,11 @@ jobs:
       - name: Build Plugins
         run: |
           cd main
+          touch local.properties
           chmod +x gradlew
           ./gradlew makePluginsJson
-          cp -r **/build/*.cs3 builds/ || true
-          cp -r **/build/*.json builds/ || true
+          find . -name "*.cs3" | xargs -I{} cp {} builds/ 2>/dev/null || true
+          cp build/plugins.json builds/ 2>/dev/null || true
 
       - name: Push to builds branch
         run: |

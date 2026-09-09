@@ -46,12 +46,12 @@ subprojects {
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     cloudstream {
-        setRepo(System.getenv("GITHUB_REPOSITORY") ?: "https://github.com/trinityzanetamanu-code/Premium_RepoX")
-        authors = listOf("trinityzanetamanu")
+        setRepo(System.getenv("GITHUB_REPOSITORY") ?: "https://github.com/Aridalimudin/Repo_Arid_Stream")
+        authors = listOf("Aridalimudin")
     }
 
     android {
-        namespace = "com.trinityzanetamanu"
+        namespace = "com.aridalimudin"
         compileSdk = 36
 
         defaultConfig {
