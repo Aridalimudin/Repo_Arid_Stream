@@ -12,6 +12,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
@@ -30,13 +33,15 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - name: Build Plugins
         working-directory: main
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "Android SDK path: $ANDROID_HOME"
+          ls "$ANDROID_HOME" || echo "SDK dir not found at $ANDROID_HOME!"
           chmod +x gradlew
           ./gradlew make makePluginsJson --continue --stacktrace || true
           echo "=== Generated files ==="
