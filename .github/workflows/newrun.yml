@@ -39,8 +39,11 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew makePluginsJson --continue || true
-          cp -f build/*.cs3 ../builds/ 2>/dev/null || true
-          cp -f build/plugins.json ../builds/ 2>/dev/null || true
+          echo "=== Hasil build ==="
+          find . -name "plugins.json" 2>/dev/null
+          find . -name "*.cs3" 2>/dev/null
+          echo "=== Copy ke builds ==="
+          find . -name "plugins.json" -exec cp -f {} ../builds/ \;
           find . -name "*.cs3" -exec cp -f {} ../builds/ \; 2>/dev/null || true
 
       - name: Push to builds branch
