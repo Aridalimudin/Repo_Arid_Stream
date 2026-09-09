@@ -38,7 +38,16 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew make makePluginsJson --stacktrace
+          set +e
+          ./gradlew make makePluginsJson --stacktrace > build_output.log 2>&1
+          EXIT_CODE=$?
+          echo "=== GRADLE LOG START ==="
+          cat build_output.log
+          echo "=== GRADLE LOG END ==="
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Gradle build failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
       - name: Collect artifacts and generate plugins.json
         run: |
