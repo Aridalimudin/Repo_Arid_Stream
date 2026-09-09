@@ -34,23 +34,26 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Build Plugins
+        working-directory: main
         run: |
-          cd main
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew makePluginsJson --continue || true
-          echo "=== Hasil build ==="
+          echo "=== Cari plugins.json ==="
           find . -name "plugins.json" 2>/dev/null
+          echo "=== Cari cs3 ==="
           find . -name "*.cs3" 2>/dev/null
-          echo "=== Copy ke builds ==="
-          find . -name "plugins.json" -exec cp -f {} ../builds/ \;
-          find . -name "*.cs3" -exec cp -f {} ../builds/ \; 2>/dev/null || true
+          echo "=== Copy files ==="
+          cp build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || echo "plugins.json not found in build/"
+          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds/ 2>/dev/null || echo "no cs3 files"
+          find . -name "*.cs3" -exec cp {} $GITHUB_WORKSPACE/builds/ \; 2>/dev/null || true
 
       - name: Push to builds branch
+        working-directory: builds
         run: |
-          cd builds
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add -f .
-          git commit -m "Build ${{ github.sha }}" || exit 0
+          git status
+          git commit -m "Build ${{ github.sha }}" || echo "Nothing to commit"
           git push
