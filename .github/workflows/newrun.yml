@@ -56,4 +56,4 @@ jobs:
           git add -A
           git status
           git commit -m "Build ${{ github.sha }}" || echo "Nothing to commit"
-          git push origin builds
+          git push --force origin builds
