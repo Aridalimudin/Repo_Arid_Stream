@@ -12,9 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_HOME: /usr/local/lib/android/sdk
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
@@ -33,21 +30,15 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Accept Android SDK licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Build Plugins
         working-directory: main
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "Android SDK path: $ANDROID_HOME"
-          ls "$ANDROID_HOME" || echo "SDK dir not found at $ANDROID_HOME!"
           chmod +x gradlew
-          ./gradlew make makePluginsJson --continue --stacktrace || true
-          echo "=== Generated files ==="
-          find . -name "*.cs3" 2>/dev/null || echo "No cs3 found"
-          find . -name "plugins.json" 2>/dev/null || echo "No plugins.json found"
-          find . -name "plugin-entry.json" 2>/dev/null || echo "No plugin-entry.json found"
+          ./gradlew make makePluginsJson --stacktrace
 
       - name: Collect artifacts and generate plugins.json
         run: |
@@ -60,7 +51,7 @@ jobs:
           # Copy all .cs3 plugin files
           find "$SRC_DIR" -type f -name "*.cs3" -exec cp -fv {} "$BUILD_DIR/" \; || true
 
-          # Generate plugins.json using helper script
+          # Copy Gradle-generated plugins.json or generate fallback
           python3 "$SRC_DIR/.github/scripts/generate_plugins_json.py"
 
           echo "=== builds dir content ==="
