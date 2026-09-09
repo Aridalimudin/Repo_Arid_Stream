@@ -30,14 +30,10 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Find Android SDK path and set local.properties
+      - name: Build Plugins
         working-directory: main
         run: |
-          # Find real Android SDK path on this runner
-          echo "=== ANDROID_HOME=$ANDROID_HOME ==="
-          echo "=== ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT ==="
-
-          # Try multiple known locations for GitHub ubuntu-latest runner
+          # Detect Android SDK path on GitHub Actions ubuntu-latest runner
           SDK_PATH=""
           for p in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" \
                    "/usr/local/lib/android/sdk" \
@@ -45,38 +41,23 @@ jobs:
                    "/opt/android-sdk"; do
             if [ -n "$p" ] && [ -d "$p/platforms" ]; then
               SDK_PATH="$p"
-              echo "Found SDK at: $SDK_PATH"
               break
             fi
           done
 
           if [ -z "$SDK_PATH" ]; then
-            echo "SDK not found in known paths. Searching..."
-            SDK_PATH=$(find /usr /home /opt -name "platforms" -path "*/android*" 2>/dev/null | head -n1 | xargs dirname || true)
-            echo "Found via search: $SDK_PATH"
+            SDK_PATH=$(find /usr /home /opt -maxdepth 6 -name "platforms" 2>/dev/null | grep -i android | head -n1 | xargs dirname 2>/dev/null || true)
           fi
 
-          if [ -z "$SDK_PATH" ]; then
-            echo "ERROR: Could not find Android SDK!"
-            exit 1
-          fi
+          echo "=== SDK Path: $SDK_PATH ==="
 
-          echo "Using SDK at: $SDK_PATH"
+          # Write local.properties WITH the found SDK path
           echo "sdk.dir=$SDK_PATH" > local.properties
           cat local.properties
 
-          # Also export for rest of step
-          echo "ANDROID_HOME=$SDK_PATH" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$SDK_PATH" >> $GITHUB_ENV
+          # Accept licenses
+          yes | "$SDK_PATH/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
 
-      - name: Accept Android SDK licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || \
-          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses 2>/dev/null || true
-
-      - name: Build Plugins
-        working-directory: main
-        run: |
           chmod +x gradlew
           ./gradlew make makePluginsJson --stacktrace
 
