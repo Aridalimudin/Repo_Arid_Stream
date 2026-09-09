@@ -39,69 +39,26 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew make makePluginsJson --continue --stacktrace || true
-          
-          echo "=== List semua file yang dihasilkan ==="
-          find . -name "*.cs3" 2>/dev/null || echo "Tidak ada cs3"
-          find . -name "plugins.json" 2>/dev/null || echo "Tidak ada plugins.json"
-          find . -name "plugin-entry.json" 2>/dev/null || echo "Tidak ada plugin-entry.json"
+          echo "=== Generated files ==="
+          find . -name "*.cs3" 2>/dev/null || echo "No cs3 found"
+          find . -name "plugins.json" 2>/dev/null || echo "No plugins.json found"
+          find . -name "plugin-entry.json" 2>/dev/null || echo "No plugin-entry.json found"
 
-      - name: Generate plugins.json
+      - name: Collect artifacts and generate plugins.json
         run: |
           BUILD_DIR="$GITHUB_WORKSPACE/builds"
           SRC_DIR="$GITHUB_WORKSPACE/main"
-          
-          # Clean builds dir properly (keep .git)
-          cd "$BUILD_DIR"
-          find . -not -path './.git/*' -not -name '.git' -delete 2>/dev/null || true
-          
-          # Copy all .cs3 files
-          cd "$SRC_DIR"
-          find . -type f -name "*.cs3" | while read f; do
-            echo "Copying: $f"
-            cp -f "$f" "$BUILD_DIR/"
-          done
-          
-          # Use Gradle-generated plugins.json if exists
-          if [ -f "$SRC_DIR/build/plugins.json" ]; then
-            echo "Found build/plugins.json from Gradle, copying..."
-            cp -f "$SRC_DIR/build/plugins.json" "$BUILD_DIR/plugins.json"
-          else
-            echo "Gradle plugins.json not found, generating from plugin-entry.json files..."
-            
-            # Find all plugin-entry.json and merge to plugins.json
-            cat /dev/null > /tmp/entries_list.txt
-            find "$SRC_DIR" -name "plugin-entry.json" | while read f; do
-              echo "$f" >> /tmp/entries_list.txt
-              echo "Found entry: $f"
-            done
-            
-            python3 << 'EOF'
-import os, json, sys
 
-src_dir = os.path.join(os.environ['GITHUB_WORKSPACE'], 'main')
-build_dir = os.path.join(os.environ['GITHUB_WORKSPACE'], 'builds')
+          # Clean builds dir (keep .git folder)
+          find "$BUILD_DIR" -mindepth 1 -not -path "$BUILD_DIR/.git/*" -not -name ".git" -delete 2>/dev/null || true
 
-entries = []
-for root, dirs, files in os.walk(src_dir):
-    for f in files:
-        if f == 'plugin-entry.json':
-            path = os.path.join(root, f)
-            try:
-                with open(path, 'r', encoding='utf-8') as fp:
-                    data = json.load(fp)
-                    entries.append(data)
-                    print('Added: ' + str(data.get('name', path)))
-            except Exception as e:
-                print('Error reading ' + path + ': ' + str(e))
+          # Copy all .cs3 plugin files
+          find "$SRC_DIR" -type f -name "*.cs3" -exec cp -fv {} "$BUILD_DIR/" \; || true
 
-out_path = os.path.join(build_dir, 'plugins.json')
-with open(out_path, 'w', encoding='utf-8') as fp:
-    json.dump(entries, fp, indent=2)
-print('Generated plugins.json with ' + str(len(entries)) + ' entries at ' + out_path)
-EOF
-          fi
-          
-          echo "=== Contents of builds dir ==="
+          # Generate plugins.json using helper script
+          python3 "$SRC_DIR/.github/scripts/generate_plugins_json.py"
+
+          echo "=== builds dir content ==="
           ls -la "$BUILD_DIR/"
 
       - name: Push to builds branch
