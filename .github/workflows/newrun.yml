@@ -38,12 +38,43 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson --continue --stacktrace || true
-          echo "=== List generated files ==="
-          find . -name "*.cs3" -o -name "plugins.json" 2>/dev/null
-          echo "=== Copying to builds dir ==="
-          cp -f build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || echo "plugins.json not found in build/"
-          find . -name "*.cs3" -exec cp -f {} $GITHUB_WORKSPACE/builds/ \; 2>/dev/null || true
+          ./gradlew make makePluginsJson --continue --stacktrace || true
+          
+          echo "=== Cleaning builds directory ==="
+          cd $GITHUB_WORKSPACE/builds
+          git rm -rf . 2>/dev/null || true
+          cd $GITHUB_WORKSPACE/main
+
+          echo "=== Copying cs3 plugins to builds ==="
+          find . -type f -name "*.cs3" -exec cp -fv {} $GITHUB_WORKSPACE/builds/ \; || true
+
+          echo "=== Copying or generating plugins.json ==="
+          if [ -f build/plugins.json ]; then
+            cp -fv build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json
+          else
+            echo "build/plugins.json not found by Gradle task, running Python fallback generator..."
+            python3 -c "
+import os, json
+
+entries = []
+for root, dirs, files in os.walk('.'):
+    for f in files:
+        if f == 'plugin-entry.json':
+            path = os.path.join(root, f)
+            try:
+                with open(path, 'r', encoding='utf-8') as fp:
+                    data = json.load(fp)
+                    entries.append(data)
+                    print(f'Added plugin entry: {data.get(\"name\")}')
+            except Exception as e:
+                print(f'Error reading {path}: {e}')
+
+out_path = os.path.join(os.environ.get('GITHUB_WORKSPACE', ''), 'builds', 'plugins.json')
+with open(out_path, 'w', encoding='utf-8') as fp:
+    json.dump(entries, fp, indent=2)
+print(f'Generated plugins.json with {len(entries)} plugins at {out_path}')
+"
+          fi
 
       - name: Push to builds branch
         working-directory: builds
