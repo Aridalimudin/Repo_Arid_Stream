@@ -39,14 +39,15 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew makePluginsJson --continue || true
-          find . -name "*.cs3" -exec cp {} ../builds/ \; 2>/dev/null || true
-          cp build/plugins.json ../builds/ 2>/dev/null || true
+          cp -f build/*.cs3 ../builds/ 2>/dev/null || true
+          cp -f build/plugins.json ../builds/ 2>/dev/null || true
+          find . -name "*.cs3" -exec cp -f {} ../builds/ \; 2>/dev/null || true
 
       - name: Push to builds branch
         run: |
           cd builds
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add .
+          git add -f .
           git commit -m "Build ${{ github.sha }}" || exit 0
           git push
