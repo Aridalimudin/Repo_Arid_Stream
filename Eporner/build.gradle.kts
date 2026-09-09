@@ -1,7 +1,7 @@
 version = 13
 
 cloudstream {
-    authors     = listOf("AdiManu")
+    authors     = listOf("Aridalimudin")
     language    = "en"
     description = "Eporner"
 

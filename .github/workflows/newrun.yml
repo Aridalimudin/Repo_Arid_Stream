@@ -16,16 +16,13 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
-          ref: main
           path: main
 
       - name: Checkout builds branch
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
           ref: builds
-          path: main/builds
+          path: builds
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -39,15 +36,14 @@ jobs:
       - name: Build Plugins
         run: |
           cd main
-          touch local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson --info --continue 2>&1 | tail -200
-          find . -name "*.cs3" | xargs -I{} cp {} builds/ 2>/dev/null || true
-          cp build/plugins.json builds/ 2>/dev/null || true
+          ./gradlew makePluginsJson
+          find . -name "*.cs3" -exec cp {} ../builds/ \; 2>/dev/null || true
+          cp build/plugins.json ../builds/ 2>/dev/null || true
 
       - name: Push to builds branch
         run: |
-          cd main/builds
+          cd builds
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add .
