@@ -1,9 +1,15 @@
 name: Build
 
+concurrency:
+  group: "build"
+  cancel-in-progress: true
+
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '*.md'
   workflow_dispatch:
 
 permissions:
@@ -13,70 +19,42 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: main
+          path: "src"
 
-      - name: Checkout builds branch
+      - name: Checkout builds
         uses: actions/checkout@v4
         with:
-          ref: builds
-          path: builds
+          ref: "builds"
+          path: "builds"
 
-      - name: Set up Java
+      - name: Clean old builds
+        run: rm $GITHUB_WORKSPACE/builds/*.cs3 2>/dev/null || true
+
+      - name: Setup JDK 11
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: "adopt"
+          java-version: 11
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
 
       - name: Build Plugins
-        working-directory: main
         run: |
-          # Detect Android SDK path on GitHub Actions ubuntu-latest runner
-          SDK_PATH=""
-          for p in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" \
-                   "/usr/local/lib/android/sdk" \
-                   "/home/runner/android-sdk" \
-                   "/opt/android-sdk"; do
-            if [ -n "$p" ] && [ -d "$p/platforms" ]; then
-              SDK_PATH="$p"
-              break
-            fi
-          done
-
-          if [ -z "$SDK_PATH" ]; then
-            SDK_PATH=$(find /usr /home /opt -maxdepth 6 -name "platforms" 2>/dev/null | grep -i android | head -n1 | xargs dirname 2>/dev/null || true)
-          fi
-
-          echo "=== SDK Path: $SDK_PATH ==="
-
-          # Write local.properties WITH the found SDK path
-          echo "sdk.dir=$SDK_PATH" > local.properties
-          cat local.properties
-
-          # Accept licenses
-          yes | "$SDK_PATH/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
-
+          cd $GITHUB_WORKSPACE/src
           chmod +x gradlew
-          ./gradlew make makePluginsJson --stacktrace
+          ./gradlew make makePluginsJson
+          cp -f **/build/*.cs3 $GITHUB_WORKSPACE/builds/ 2>/dev/null || true
+          cp -f build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || true
 
-      - name: Collect artifacts and generate plugins.json
+      - name: Generate plugins.json fallback
         run: |
-          BUILD_DIR="$GITHUB_WORKSPACE/builds"
-          SRC_DIR="$GITHUB_WORKSPACE/main"
-
-          # Clean builds dir (keep .git folder)
-          find "$BUILD_DIR" -mindepth 1 -not -path "$BUILD_DIR/.git/*" -not -name ".git" -delete 2>/dev/null || true
-
-          # Copy all .cs3 plugin files
-          find "$SRC_DIR" -type f -name "*.cs3" -exec cp -fv {} "$BUILD_DIR/" \; || true
-
-          # Copy Gradle-generated plugins.json or generate fallback
-          python3 "$SRC_DIR/.github/scripts/generate_plugins_json.py"
-
-          echo "=== builds dir content ==="
-          ls -la "$BUILD_DIR/"
+          if [ ! -s "$GITHUB_WORKSPACE/builds/plugins.json" ]; then
+            python3 "$GITHUB_WORKSPACE/src/.github/scripts/generate_plugins_json.py"
+          fi
 
       - name: Push to builds branch
         working-directory: builds
