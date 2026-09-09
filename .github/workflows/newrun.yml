@@ -24,8 +24,8 @@ jobs:
           ref: builds
           path: builds
 
-      - name: Clean old builds
-        run: rm -f $GITHUB_WORKSPACE/builds/*.cs3 $GITHUB_WORKSPACE/builds/plugins.json || true
+      - name: Clean old builds directory
+        run: rm -rf $GITHUB_WORKSPACE/builds/* $GITHUB_WORKSPACE/builds/.* 2>/dev/null || true
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -41,7 +41,7 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson --continue --stacktrace || true
+          ./gradlew makePluginsJson --stacktrace
           echo "=== List generated cs3 and json files ==="
           find . -name "*.cs3" -o -name "plugins.json"
           cp -f build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || true

@@ -41,6 +41,13 @@ fun Project.android(configuration: LibraryExtension.() -> Unit) {
     }
 }
 
+apply(plugin = "com.lagradost.cloudstream3.gradle")
+
+cloudstream {
+    setRepo("https://github.com/Aridalimudin/Repo_Arid_Stream")
+    authors = listOf("Aridalimudin")
+}
+
 subprojects {
     apply(plugin = "com.android.library")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
