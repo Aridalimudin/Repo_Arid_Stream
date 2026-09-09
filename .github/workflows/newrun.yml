@@ -41,7 +41,7 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew makePluginsJson --stacktrace
+          ./gradlew makePluginsJson --continue --stacktrace
           echo "=== List generated cs3 and json files ==="
           find . -name "*.cs3" -o -name "plugins.json"
           cp -f build/plugins.json $GITHUB_WORKSPACE/builds/plugins.json 2>/dev/null || true

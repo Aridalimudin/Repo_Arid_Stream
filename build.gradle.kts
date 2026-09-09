@@ -41,13 +41,6 @@ fun Project.android(configuration: LibraryExtension.() -> Unit) {
     }
 }
 
-apply(plugin = "com.lagradost.cloudstream3.gradle")
-
-cloudstream {
-    setRepo("https://github.com/Aridalimudin/Repo_Arid_Stream")
-    authors = listOf("Aridalimudin")
-}
-
 subprojects {
     apply(plugin = "com.android.library")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
@@ -59,14 +52,14 @@ subprojects {
 
     android {
         namespace = "com.lagradost"
-        compileSdk = 36
+        compileSdk = 35
 
         defaultConfig {
             minSdk = 21
         }
 
         lint {
-            targetSdk = 36
+            targetSdk = 35
         }
 
         compileOptions {
